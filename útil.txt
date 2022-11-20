@@ -1,0 +1,7 @@
+#    stage('Analise Sonar') {
+#        script {
+#            withSonarQubeEnv('SONAR_LOCAL') {
+#                sh "${scannerHome}/bin/sonar-scanner -e -Dsonar.projectKey=ms-kafka -Dsonar.host.url=http://20.65.18.168:9000/ -Dsonar.login=6623111e27199dcfe563dedbb3f3b8b77f203489 -Dsonar.java.binaries=target"
+#            }
+#        }
+    }

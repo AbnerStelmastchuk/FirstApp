@@ -1,0 +1,57 @@
+def DOCKER_IMAGE = "firstapp:latest"
+def GIT_SRC_URL = "https://github.com/AbnerStelmastchuk/FirstApp/tree/infrastructure"
+def GIT_CI_ARTIFACT_URL = "scm.userRemoteConfigs[0].url"
+def GIT_HELM_URL = "https://github.com/AbnerStelmastchuk/FirstApp/tree/infrastructure"
+def KUBE_NAMESPACE = "firstwebapp"
+def PROJECT_NAME = "firstwebapp"
+def IMAGE_REPOSITORY = "abnerstelmastchuk/"
+def CI_FILES_PATH = "deploy"
+def HELM_FILES_PATH = "helm"
+node('poc') {
+    try {
+      def scannerHome = tool 'SONAR_SCANNER'
+      stage('Git Checkout') {
+  
+        checkout([$class: 'GitSCM', branches: [[name: env.BRANCH_NAME]],
+          userRemoteConfigs: [[credentialsId: 'git', url: GIT_SRC_URL]]])
+
+        checkout([$class: 'GitSCM', branches: [[name: "main"]], skipChangeLog: false,
+         extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: HELM_FILES_PATH]],
+         userRemoteConfigs: [[credentialsId: 'git', url: GIT_HELM_URL]]])   
+
+      }
+
+      stage('Build node') {        
+           sh 'npm install'
+      }
+      
+      stage('Testes Unitários') {
+         sh './jenkins/scripts/test.sh' 
+      }
+      dir(HELM_FILES_PATH) {
+      stage('Build Docker') {   
+          sh "sudo mv Dockerfile .."
+          sh "sudo docker build -t ${DOCKER_IMAGE} .."
+        }
+      }
+
+      dir(HELM_FILES_PATH) {
+      stage('Deploy') {                 
+           sh "sudo docker tag ${DOCKER_IMAGE} ${IMAGE_REPOSITORY}${DOCKER_IMAGE}"
+           sh "sudo docker push ${IMAGE_REPOSITORY}${DOCKER_IMAGE}"
+        }
+      }
+
+      dir(HELM_FILES_PATH) {
+        stage("Deploy Helm"){ 
+          sh 'helm upgrade --install firstwebapp -n onpremise ./helm/chart'
+        }
+      }   
+
+      } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {    
+        currentBuild.result = 'ABORTED'    
+      } catch (Exception e) {
+        error e.toString();
+      }
+
+    }
