@@ -1,0 +1,4 @@
+checkout([$class: 'GitSCM', branches: [[name: 'infrastructure']], browser: [$class: 'GithubWeb', repoUrl: 'https://github.com/AbnerStelmastchuk/FirstApp'],
+        extensions: [[$class: 'CloneOption', honorRefspec: true, noTags: false, reference: '', shallow: false],
+        [$class: 'GitLFSPull'], [$class: 'LocalBranch', localBranch: 'infrastructure']],
+        userRemoteConfigs: [[credentialsId: '1', url: 'https://github.com/AbnerStelmastchuk/FirstApp']]])
